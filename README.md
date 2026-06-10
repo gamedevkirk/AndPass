@@ -10,6 +10,10 @@ For information on setting up a password repository with Git + PGP, see [this ar
 
 ## Building the Project
 
+This repo is highly dependent on submodules. Before building, ensure you've properly cloned all required submodules.
+
+`git submodule update --init --recursive`
+
 There are helper scripts setup at the root of the project for building each of the submodules for Android. As long as you've setup your Android-related environment variables, these should work out of the box.
 
 Module Compilation Order:
