@@ -1,0 +1,38 @@
+---
+BasedOnStyle: Mozilla
+---
+Language: Cpp
+Standard: c++17
+SortIncludes: Never
+IncludeBlocks: Preserve
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForIndentation
+ColumnLimit: 100
+BreakBeforeBraces: Allman
+BreakAfterReturnType: Automatic
+PointerAlignment: Right
+SpaceBeforeParens: ControlStatements
+PackConstructorInitializers: CurrentLine
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Never
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+AllowShortIfStatementsOnASingleLine: false
+AlignConsecutiveAssignments: None
+SpaceBeforeAssignmentOperators: true
+AlignAfterOpenBracket: BlockIndent
+AllowShortFunctionsOnASingleLine: Inline
+AllowAllArgumentsOnNextLine: false
+BinPackParameters: false
+BinPackArguments: false
+PenaltyExcessCharacter: 1
+PenaltyBreakOpenParenthesis: 1
+PenaltyBreakBeforeFirstCallParameter: 1
+PenaltyBreakAssignment: 75
+PenaltyBreakScopeResolution: 9999
+PenaltyReturnTypeOnItsOwnLine: 9999
+---
+Language: CSharp
+ColumnLimit: 0
+...

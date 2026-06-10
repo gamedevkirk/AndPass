@@ -1,0 +1,16 @@
+[submodule "external/libgit2"]
+	path = external/libgit2
+	url = https://github.com/libgit2/libgit2.git
+[submodule "external/openssl"]
+	path = external/openssl
+	url = https://github.com/openssl/openssl.git
+[submodule "external/bzip2"]
+	path = external/bzip2
+	url = git://sourceware.org/git/bzip2.git
+[submodule "external/json-c"]
+	path = external/json-c
+	url = https://github.com/json-c/json-c.git
+[submodule "external/rnp"]
+	path = external/rnp
+	url = https://github.com/gamedevkirk/rnp-android.git
+    branch = android-v0.18.1

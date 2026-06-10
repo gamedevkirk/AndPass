@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="280dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/nav_popup_background"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/nav_dialog_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Navigation"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/nav_home_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Home" />
+
+    <Button
+        android:id="@+id/nav_passwords_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Passwords" />
+
+    <Button
+        android:id="@+id/nav_git_settings_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Git Settings" />
+
+    <Button
+        android:id="@+id/nav_pgp_settings_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="PGP Settings" />
+
+    <Button
+        android:id="@+id/nav_tests_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tests" />
+
+</LinearLayout>

@@ -1,0 +1,11 @@
+<!-- App bar menu. -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_navigation"
+        android:icon="@drawable/ic_menu_24"
+        android:title="Navigation"
+        app:showAsAction="always" />
+
+</menu>
