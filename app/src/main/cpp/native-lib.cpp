@@ -17,6 +17,7 @@
 namespace fs = std::filesystem;
 
 #define GIT_ERROR(expression) (((expression)) < 0)
+#define RNP_ERROR(expression) (((expression)) != 0)
 
 /***********************************************
  * Structs
@@ -104,6 +105,27 @@ static bool is_path_inside_dot_git(const fs::path &path)
 	}
 
 	return false;
+}
+
+static bool jstring_to_string(JNIEnv *env, jstring jstr, std::string &outStr)
+{
+	if (jstr == nullptr)
+	{
+		outStr = "Jstring is invalid";
+		return false;
+	}
+
+	const char *jstrChars = env->GetStringUTFChars(jstr, nullptr);
+	if (jstrChars == nullptr)
+	{
+		env->ReleaseStringUTFChars(jstr, jstrChars);
+		outStr = "Unable to read jstring";
+		return false;
+	}
+
+	outStr = jstrChars;
+	env->ReleaseStringUTFChars(jstr, jstrChars);
+	return true;
 }
 
 /***********************************************
@@ -551,7 +573,7 @@ static std::string run_git_credentials_test(
 }
 
 /***********************************************
- * JNI Methods
+ * JNI Functions
  ***********************************************/
 
 extern "C" JNIEXPORT jstring JNICALL Java_com_sneakyshiba_andpass_MainActivity_getVersionInfo(JNIEnv *env, jobject /* this */)
@@ -572,19 +594,11 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_sneakyshiba_andpass_MainActivity_g
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_sneakyshiba_andpass_MainActivity_testStorage(JNIEnv *env, jobject /* this */, jstring storagePathJString)
 {
-	if (storagePathJString == nullptr)
+	std::string storagePath;
+	if (!jstring_to_string(env, storagePathJString, storagePath))
 	{
-		return env->NewStringUTF("Storage test failed\nStorage path was null");
+		return env->NewStringUTF("Storage test failed\nStorage path was invalid");
 	}
-
-	const char *storagePathChars = env->GetStringUTFChars(storagePathJString, nullptr);
-	if (storagePathChars == nullptr)
-	{
-		return env->NewStringUTF("Storage test failed\nUnable to read storage path string");
-	}
-
-	std::string storagePath = storagePathChars;
-	env->ReleaseStringUTFChars(storagePathJString, storagePathChars);
 
 	std::string result = run_storage_test(storagePath);
 	return env->NewStringUTF(result.c_str());
@@ -593,19 +607,11 @@ Java_com_sneakyshiba_andpass_MainActivity_testStorage(JNIEnv *env, jobject /* th
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_sneakyshiba_andpass_MainActivity_testHttps(JNIEnv *env, jobject /* this */, jstring caPathJString)
 {
-	if (caPathJString == nullptr)
+	std::string caPath;
+	if (!jstring_to_string(env, caPathJString, caPath))
 	{
-		return env->NewStringUTF("HTTPS test failed\nCA path was null");
+		return env->NewStringUTF("HTTPS test failed\nCA path was invalid");
 	}
-
-	const char *caPathChars = env->GetStringUTFChars(caPathJString, nullptr);
-	if (caPathChars == nullptr)
-	{
-		return env->NewStringUTF("HTTPS test failed\nUnable to read CA path string");
-	}
-
-	std::string caPath = caPathChars;
-	env->ReleaseStringUTFChars(caPathJString, caPathChars);
 
 	std::string result = run_libgit2_https_test(caPath);
 	return env->NewStringUTF(result.c_str());
@@ -614,34 +620,17 @@ Java_com_sneakyshiba_andpass_MainActivity_testHttps(JNIEnv *env, jobject /* this
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_sneakyshiba_andpass_MainActivity_testGit(JNIEnv *env, jobject /* this */, jstring caPathJString, jstring storagePathJString)
 {
-	if (caPathJString == nullptr)
+	std::string caPath;
+	if (!jstring_to_string(env, caPathJString, caPath))
 	{
-		return env->NewStringUTF("Git test failed\nCA path was null");
+		return env->NewStringUTF("Git test failed\nCA path was invalid");
 	}
 
-	if (storagePathJString == nullptr)
+	std::string storagePath;
+	if (!jstring_to_string(env, storagePathJString, storagePath))
 	{
-		return env->NewStringUTF("Git test failed\nStorage path was null");
+		return env->NewStringUTF("Git test failed\nStorage path was invalid");
 	}
-
-	const char *caPathChars = env->GetStringUTFChars(caPathJString, nullptr);
-	if (caPathChars == nullptr)
-	{
-		return env->NewStringUTF("Git test failed\nUnable to read CA path string");
-	}
-
-	const char *storagePathChars = env->GetStringUTFChars(storagePathJString, nullptr);
-	if (storagePathChars == nullptr)
-	{
-		env->ReleaseStringUTFChars(caPathJString, caPathChars);
-		return env->NewStringUTF("Git test failed\nUnable to read storage path string");
-	}
-
-	std::string caPath = caPathChars;
-	std::string storagePath = storagePathChars;
-
-	env->ReleaseStringUTFChars(caPathJString, caPathChars);
-	env->ReleaseStringUTFChars(storagePathJString, storagePathChars);
 
 	std::string result = run_git_test(caPath, storagePath);
 	return env->NewStringUTF(result.c_str());
@@ -656,68 +645,31 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_sneakyshiba_andpass_MainActivity_t
   jstring passwordJString
 )
 {
-	if (caPathJString == nullptr)
+	std::string caPath;
+	if (!jstring_to_string(env, caPathJString, caPath))
 	{
-		return env->NewStringUTF("Git credentials test failed\nCA path was null");
+		return env->NewStringUTF("Git credentials test failed\nCA path was invalid");
 	}
 
-	if (repositoryUrlJString == nullptr)
+	std::string repositoryUrl;
+	if (!jstring_to_string(env, repositoryUrlJString, repositoryUrl))
 	{
-		return env->NewStringUTF("Git credentials test failed\nRepository URL was null");
+		return env->NewStringUTF("Git credentials test failed\nRepository URL was invalid");
 	}
 
-	if (usernameJString == nullptr)
+	std::string username;
+	if (!jstring_to_string(env, usernameJString, username))
 	{
-		return env->NewStringUTF("Git credentials test failed\nUsername was null");
+		return env->NewStringUTF("Git credentials test failed\nUsername was invalid");
 	}
 
-	if (passwordJString == nullptr)
+	std::string password;
+	if (!jstring_to_string(env, passwordJString, password))
 	{
-		return env->NewStringUTF("Git credentials test failed\nPassword was null");
+		return env->NewStringUTF("Git credentials test failed\nPassword was invalid");
 	}
-
-	const char *caPathChars = env->GetStringUTFChars(caPathJString, nullptr);
-	const char *repositoryUrlChars = env->GetStringUTFChars(repositoryUrlJString, nullptr);
-	const char *usernameChars = env->GetStringUTFChars(usernameJString, nullptr);
-	const char *passwordChars = env->GetStringUTFChars(passwordJString, nullptr);
-
-	if (caPathChars == nullptr || repositoryUrlChars == nullptr || usernameChars == nullptr || passwordChars == nullptr)
-	{
-		if (caPathChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(caPathJString, caPathChars);
-		}
-
-		if (repositoryUrlChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(repositoryUrlJString, repositoryUrlChars);
-		}
-
-		if (usernameChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(usernameJString, usernameChars);
-		}
-
-		if (passwordChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(passwordJString, passwordChars);
-		}
-
-		return env->NewStringUTF("Git credentials test failed\nUnable to read one or more input strings");
-	}
-
-	std::string caPath = caPathChars;
-	std::string repositoryUrl = repositoryUrlChars;
-	std::string username = usernameChars;
-	std::string password = passwordChars;
-
-	env->ReleaseStringUTFChars(caPathJString, caPathChars);
-	env->ReleaseStringUTFChars(repositoryUrlJString, repositoryUrlChars);
-	env->ReleaseStringUTFChars(usernameJString, usernameChars);
-	env->ReleaseStringUTFChars(passwordJString, passwordChars);
 
 	std::string result = run_git_credentials_test(caPath, repositoryUrl, username, password);
-
 	return env->NewStringUTF(result.c_str());
 }
 
@@ -731,53 +683,37 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_sneakyshiba_andpass_MainActivity_s
   jstring passwordJString
 )
 {
-	if (
-	  caPathJString == nullptr || storagePathJString == nullptr ||
-	  repositoryUrlJString == nullptr || usernameJString == nullptr || passwordJString == nullptr
-	)
+	std::string caPath;
+	if (!jstring_to_string(env, caPathJString, caPath))
 	{
-		return env->NewStringUTF("Sync failed\nOne or more input strings were null");
+		return env->NewStringUTF("Sync failed\nCA Path was invalid");
 	}
 
-	const char *caPathChars = env->GetStringUTFChars(caPathJString, nullptr);
-	const char *storagePathChars = env->GetStringUTFChars(storagePathJString, nullptr);
-	const char *repositoryUrlChars = env->GetStringUTFChars(repositoryUrlJString, nullptr);
-	const char *usernameChars = env->GetStringUTFChars(usernameJString, nullptr);
-	const char *passwordChars = env->GetStringUTFChars(passwordJString, nullptr);
-
-	if (
-	  caPathChars == nullptr || storagePathChars == nullptr || repositoryUrlChars == nullptr ||
-	  usernameChars == nullptr || passwordChars == nullptr
-	)
+	std::string storagePath;
+	if (!jstring_to_string(env, storagePathJString, storagePath))
 	{
-		if (caPathChars != nullptr)
-			env->ReleaseStringUTFChars(caPathJString, caPathChars);
-		if (storagePathChars != nullptr)
-			env->ReleaseStringUTFChars(storagePathJString, storagePathChars);
-		if (repositoryUrlChars != nullptr)
-			env->ReleaseStringUTFChars(repositoryUrlJString, repositoryUrlChars);
-		if (usernameChars != nullptr)
-			env->ReleaseStringUTFChars(usernameJString, usernameChars);
-		if (passwordChars != nullptr)
-			env->ReleaseStringUTFChars(passwordJString, passwordChars);
-
-		return env->NewStringUTF("Sync failed\nUnable to read one or more input strings");
+		return env->NewStringUTF("Sync failed\nStorage Path was invalid");
 	}
 
-	std::string caPath = caPathChars;
-	std::string storagePath = storagePathChars;
-	std::string repositoryUrl = repositoryUrlChars;
-	std::string username = usernameChars;
-	std::string password = passwordChars;
+	std::string repositoryUrl;
+	if (!jstring_to_string(env, repositoryUrlJString, repositoryUrl))
+	{
+		return env->NewStringUTF("Sync failed\nRepository URL was invalid");
+	}
 
-	env->ReleaseStringUTFChars(caPathJString, caPathChars);
-	env->ReleaseStringUTFChars(storagePathJString, storagePathChars);
-	env->ReleaseStringUTFChars(repositoryUrlJString, repositoryUrlChars);
-	env->ReleaseStringUTFChars(usernameJString, usernameChars);
-	env->ReleaseStringUTFChars(passwordJString, passwordChars);
+	std::string username;
+	if (!jstring_to_string(env, usernameJString, username))
+	{
+		return env->NewStringUTF("Sync failed\nUsername was invalid");
+	}
+
+	std::string password;
+	if (!jstring_to_string(env, passwordJString, password))
+	{
+		return env->NewStringUTF("Sync failed\nPassword was invalid");
+	}
 
 	std::string result = run_sync_password_repository(caPath, storagePath, repositoryUrl, username, password);
-
 	return env->NewStringUTF(result.c_str());
 }
 
@@ -788,33 +724,17 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_sneakyshiba_andpass_MainActivity_l
   jstring relativePathJString
 )
 {
-	if (storagePathJString == nullptr || relativePathJString == nullptr)
+	std::string storagePath;
+	if (!jstring_to_string(env, storagePathJString, storagePath))
 	{
-		return env->NewStringUTF("ERROR\nUnable to list password entries\nOne or more input strings were null");
+		return env->NewStringUTF("List repository entries failed\nCA path was invalid");
 	}
 
-	const char *storagePathChars = env->GetStringUTFChars(storagePathJString, nullptr);
-	const char *relativePathChars = env->GetStringUTFChars(relativePathJString, nullptr);
-	if (storagePathChars == nullptr || relativePathChars == nullptr)
+	std::string relativePath;
+	if (!jstring_to_string(env, relativePathJString, relativePath))
 	{
-		if (storagePathChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(storagePathJString, storagePathChars);
-		}
-
-		if (relativePathChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(relativePathJString, relativePathChars);
-		}
-
-		return env->NewStringUTF("ERROR\nUnable to list password entries\nUnable to read input strings");
+		return env->NewStringUTF("List repository entries failed\nRelative path was invalid");
 	}
-
-	std::string storagePath = storagePathChars;
-	std::string relativePath = relativePathChars;
-
-	env->ReleaseStringUTFChars(storagePathJString, storagePathChars);
-	env->ReleaseStringUTFChars(relativePathJString, relativePathChars);
 
 	std::string repoPath = storagePath + "/password-store";
 	std::string result = list_repository_entries(repoPath, relativePath);
@@ -830,48 +750,29 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_sneakyshiba_andpass_MainActivity_t
   jstring passphraseJString
 )
 {
-	const char *publicKeyPathChars = env->GetStringUTFChars(publicKeyPathJString, nullptr);
-	const char *privateKeyPathChars = env->GetStringUTFChars(privateKeyPathJString, nullptr);
-	const char *workingDirectoryPathChars = env->GetStringUTFChars(workingDirectoryPathJString, nullptr);
-	const char *passphraseChars = env->GetStringUTFChars(passphraseJString, nullptr);
-
-	if (
-	  publicKeyPathChars == nullptr || privateKeyPathChars == nullptr ||
-	  workingDirectoryPathChars == nullptr || passphraseChars == nullptr
-	)
+	std::string publicKeyPath;
+	if (!jstring_to_string(env, publicKeyPathJString, publicKeyPath))
 	{
-		if (publicKeyPathChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(publicKeyPathJString, publicKeyPathChars);
-		}
-
-		if (privateKeyPathChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(privateKeyPathJString, privateKeyPathChars);
-		}
-
-		if (workingDirectoryPathChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(workingDirectoryPathJString, workingDirectoryPathChars);
-		}
-
-		if (passphraseChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(passphraseJString, passphraseChars);
-		}
-
-		return env->NewStringUTF("PGP test failed.\n\nUnable to read input strings.");
+		return env->NewStringUTF("PGP test failed\nPublic Key Path was invalid");
 	}
 
-	std::string publicKeyPath = publicKeyPathChars;
-	std::string privateKeyPath = privateKeyPathChars;
-	std::string workingDirectoryPath = workingDirectoryPathChars;
-	std::string passphrase = passphraseChars;
+	std::string privateKeyPath;
+	if (!jstring_to_string(env, privateKeyPathJString, privateKeyPath))
+	{
+		return env->NewStringUTF("PGP test failed\nPrivate Key Path was invalid");
+	}
 
-	env->ReleaseStringUTFChars(publicKeyPathJString, publicKeyPathChars);
-	env->ReleaseStringUTFChars(privateKeyPathJString, privateKeyPathChars);
-	env->ReleaseStringUTFChars(workingDirectoryPathJString, workingDirectoryPathChars);
-	env->ReleaseStringUTFChars(passphraseJString, passphraseChars);
+	std::string workingDirectoryPath;
+	if (!jstring_to_string(env, workingDirectoryPathJString, workingDirectoryPath))
+	{
+		return env->NewStringUTF("PGP test failed\nWorking Directory Path was invalid");
+	}
+
+	std::string passphrase;
+	if (!jstring_to_string(env, passphraseJString, passphrase))
+	{
+		return env->NewStringUTF("PGP test failed\nPassphrase was invalid");
+	}
 
 	std::string plaintext = "andpass-pgp-round-trip-test-password\n";
 	std::string recipientFingerprint = "BEB4E33FF23B58FECE21DED29C86F89BA00C12A2";
@@ -1033,45 +934,34 @@ finish:
 extern "C" JNIEXPORT jstring JNICALL Java_com_sneakyshiba_andpass_MainActivity_decryptPasswordFile(
   JNIEnv *env,
   jobject /* thiz */,
-  jstring privateKeyPathJ,
-  jstring encryptedFilePathJ,
-  jstring passphraseJ
+  jstring privateKeyPathJString,
+  jstring encryptedFilePathJString,
+  jstring passphraseJString
 )
 {
-	std::ostringstream output;
+	uint8_t *decryptedBuffer = nullptr;
+	size_t decryptedBufferLength = 0;
+	rnp_result_t result = {};
 
-	const char *privateKeyPathChars = env->GetStringUTFChars(privateKeyPathJ, nullptr);
-	const char *encryptedFilePathChars = env->GetStringUTFChars(encryptedFilePathJ, nullptr);
-	const char *passphraseChars = env->GetStringUTFChars(passphraseJ, nullptr);
-
-	if (privateKeyPathChars == nullptr || encryptedFilePathChars == nullptr || passphraseChars == nullptr)
+	std::string privateKeyPath;
+	if (!jstring_to_string(env, privateKeyPathJString, privateKeyPath))
 	{
-		if (privateKeyPathChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(privateKeyPathJ, privateKeyPathChars);
-		}
-
-		if (encryptedFilePathChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(encryptedFilePathJ, encryptedFilePathChars);
-		}
-
-		if (passphraseChars != nullptr)
-		{
-			env->ReleaseStringUTFChars(passphraseJ, passphraseChars);
-		}
-
-		return env->NewStringUTF("Decrypt failed.\n\nUnable to read JNI string arguments.");
+		return env->NewStringUTF("Decrypt password file failed\nPrivate Key Path was invalid");
 	}
 
-	std::string privateKeyPath(privateKeyPathChars);
-	std::string encryptedFilePath(encryptedFilePathChars);
-	std::string passphrase(passphraseChars);
+	std::string encryptedFilePath;
+	if (!jstring_to_string(env, encryptedFilePathJString, encryptedFilePath))
+	{
+		return env->NewStringUTF("Decrypt password file failed\nEncrypted File Path was invalid");
+	}
 
-	env->ReleaseStringUTFChars(privateKeyPathJ, privateKeyPathChars);
-	env->ReleaseStringUTFChars(encryptedFilePathJ, encryptedFilePathChars);
-	env->ReleaseStringUTFChars(passphraseJ, passphraseChars);
+	std::string passphrase;
+	if (!jstring_to_string(env, passphraseJString, passphrase))
+	{
+		return env->NewStringUTF("Decrypt password file failed\nPassphrase was invalid");
+	}
 
+	std::ostringstream output;
 	rnp_ffi_t ffi = nullptr;
 	rnp_input_t privateKeyInput = nullptr;
 	rnp_input_t encryptedInput = nullptr;
@@ -1080,71 +970,53 @@ extern "C" JNIEXPORT jstring JNICALL Java_com_sneakyshiba_andpass_MainActivity_d
 	RnpPasswordContext passwordContext;
 	passwordContext.passphrase = passphrase;
 
-	rnp_result_t result = rnp_ffi_create(&ffi, "GPG", "GPG");
-	if (result != 0)
+	if (RNP_ERROR(rnp_ffi_create(&ffi, "GPG", "GPG")))
 	{
-		output << "Decrypt failed.\n\nUnable to create RNP FFI.\nRNP result code: "
-		       << static_cast<int>(result);
+		output << "Decrypt failed.\n\nUnable to create RNP FFI.";
 		return env->NewStringUTF(output.str().c_str());
 	}
 
-	result = rnp_input_from_path(&privateKeyInput, privateKeyPath.c_str());
-	if (result != 0)
+	if (RNP_ERROR(rnp_input_from_path(&privateKeyInput, privateKeyPath.c_str())))
 	{
-		output << "Decrypt failed.\n\nUnable to open private key file:\n"
-		       << privateKeyPath << "\n\nRNP result code: " << static_cast<int>(result);
+		output << "Decrypt failed.\n\nUnable to open private key file:\n" << privateKeyPath;
 		goto finish;
 	}
 
-	result = rnp_load_keys(ffi, "GPG", privateKeyInput, RNP_LOAD_SAVE_SECRET_KEYS);
-	if (result != 0)
+	if (RNP_ERROR(rnp_load_keys(ffi, "GPG", privateKeyInput, RNP_LOAD_SAVE_SECRET_KEYS)))
 	{
-		output << "Decrypt failed.\n\nUnable to load private key file:\n"
-		       << privateKeyPath << "\n\nRNP result code: " << static_cast<int>(result);
+		output << "Decrypt failed.\n\nUnable to load private key file:\n" << privateKeyPath;
 		goto finish;
 	}
 
 	rnp_ffi_set_pass_provider(ffi, rnp_password_provider, &passwordContext);
 
-	result = rnp_input_from_path(&encryptedInput, encryptedFilePath.c_str());
-	if (result != 0)
+	if (RNP_ERROR(rnp_input_from_path(&encryptedInput, encryptedFilePath.c_str())))
 	{
 		output << "Decrypt failed.\n\nUnable to open encrypted password file:\n"
-		       << encryptedFilePath << "\n\nRNP result code: " << static_cast<int>(result);
+		       << encryptedFilePath;
 		goto finish;
 	}
 
-	result = rnp_output_to_memory(&decryptedOutput, 0);
-	if (result != 0)
+	if (RNP_ERROR(rnp_output_to_memory(&decryptedOutput, 0)))
 	{
-		output << "Decrypt failed.\n\nUnable to create decrypted memory output.\nRNP result code: "
-		       << static_cast<int>(result);
+		output << "Decrypt failed.\n\nUnable to create decrypted memory output.";
 		goto finish;
 	}
 
-	result = rnp_decrypt(ffi, encryptedInput, decryptedOutput);
-	if (result != 0)
+	if (RNP_ERROR(rnp_decrypt(ffi, encryptedInput, decryptedOutput)))
 	{
 		output << "Decrypt failed.\n\nLikely bad password supplied";
 		goto finish;
 	}
 
+	result = rnp_output_memory_get_buf(decryptedOutput, &decryptedBuffer, &decryptedBufferLength, false);
+	if (result != 0 || decryptedBuffer == nullptr)
 	{
-		uint8_t *decryptedBuffer = nullptr;
-		size_t decryptedBufferLength = 0;
-
-		result = rnp_output_memory_get_buf(decryptedOutput, &decryptedBuffer, &decryptedBufferLength, false);
-
-		if (result != 0 || decryptedBuffer == nullptr)
-		{
-			output
-			  << "Decrypt failed.\n\nUnable to read decrypted memory output.\nRNP result code: "
-			  << static_cast<int>(result);
-			goto finish;
-		}
-
-		output << std::string(reinterpret_cast<char *>(decryptedBuffer), decryptedBufferLength);
+		output << "Decrypt failed.\n\nUnable to read decrypted memory output.";
+		goto finish;
 	}
+
+	output << std::string(reinterpret_cast<char *>(decryptedBuffer), decryptedBufferLength);
 
 finish:
 	if (decryptedOutput != nullptr)

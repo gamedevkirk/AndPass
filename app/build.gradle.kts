@@ -15,8 +15,8 @@ android {
         applicationId = "com.sneakyshiba.andpass"
         minSdk = 24
         targetSdk = 36
-        versionCode = 302
-        versionName = "00.03.02"
+        versionCode = 304
+        versionName = "00.03.04"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
